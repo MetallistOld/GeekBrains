@@ -1,22 +1,20 @@
 import os
 
-folder = 'some_data'
+directory = 'some_data'
+groups = [100, 1000, 10000, 100000, 1000000]  # размеры, на какие группы разбивать
+groups += [float("inf")]                 # последняя группа для "меньше бесконечности"
+result = dict.fromkeys(groups, 0)
 
-res = {}
-size_start = 0
-size_end = 100 * 2 ** 10
-size_count = 100
+# обходим всю иерархию подкаталогов
+for path_from_top, subdirs, files in os.walk(directory):
+    for file in files:
+        path = os.path.join(path_from_top, file)
+        size = os.path.getsize(path)
+        # вычисляем ближайшее большее число из groups, куда и посчитаем файл
+        to_group = min(filter(lambda x: size < x, groups))
+        result[to_group] += 1
 
-while True:
-    size_files = [item.name
-                  for item in os.scandir(folder)
-                  if size_start < item.stat().st_size < size_end]
-
-    if len(size_files) == 0:
-        break
-    res[size_count] = len(size_files)
-
-    size_start = size_end
-    size_end = size_start * 10
-    size_count = size_count * 10
-print(res)
+prev_size = 0
+for size in groups:
+    print(f"Файлов размером (байт) от {prev_size:8} до {size:8} : {result[size]}")
+    prev_size = size
